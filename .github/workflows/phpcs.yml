@@ -25,4 +25,4 @@ jobs:
         run: composer global require 'squizlabs/php_codesniffer=*'
 
       - name: Validate PSR-12 Code Style
-        run: ~/.composer/vendor/bin/phpcs --standard=PSR12 -p **/.php
+        run: ~/.composer/vendor/bin/phpcs --standard=PSR12 -p saturne/
