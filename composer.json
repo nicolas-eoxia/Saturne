@@ -1,13 +1,6 @@
 {
     "name": "evarisk/saturne",
     "description": "Saturne",
-    "author": "Evarisk",
-    "contributors": [
-        {
-            "name": "Evarisk",
-            "email": "technique@evarisk.com"
-        }
-    ],
     "license": "GPL-3.0-or-later",
     "require-dev": {
         "squizlabs/php_codesniffer": "*"
