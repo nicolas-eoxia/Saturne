@@ -1,4 +1,14 @@
 {
+    "name": "evarisk/saturne",
+    "description": "Saturne",
+    "author": "Evarisk",
+    "contributors": [
+        {
+            "name": "Evarisk",
+            "email": "technique@evarisk.com"
+        }
+    ],
+    "license": "GPLv3",
     "require-dev": {
         "squizlabs/php_codesniffer": "*"
     }
