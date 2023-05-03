@@ -8,7 +8,7 @@
             "email": "technique@evarisk.com"
         }
     ],
-    "license": "GPLv3",
+    "license": "GPL-3.0-or-later",
     "require-dev": {
         "squizlabs/php_codesniffer": "*"
     }
