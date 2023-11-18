@@ -45,6 +45,8 @@ abstract class SaturneObject extends CommonObject
      */
     public int $isextrafieldmanaged = 1;
 
+    public string $oldref = '';
+
     /**
      * Constructor.
      *
