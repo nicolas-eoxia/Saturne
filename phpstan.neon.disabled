@@ -1,0 +1,15 @@
+includes:
+    - ../../../../phpstan.neon
+
+parameters:
+	customRulesetUsed: true
+	level: 1
+	fileExtensions:
+		- php
+	paths:
+	    - admin
+	    - class
+	    - core
+	    - lib
+	    - public
+	    - view
