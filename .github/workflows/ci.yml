@@ -7,7 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build Dolibarr 18.0
-        run: git clone https://github.com/dolibarr/dolibarr -b 18.0 && ls
+        run: git clone https://github.com/dolibarr/dolibarr -b 18.0 && pwd
+
+      - name: Change directory in custom
+        run: cd htdocs/custom && pwd
+
+      - name: Build Saturne 1.2.0
+        run: git clone https://github.com/evarisk/saturne
   phpstan:
     runs-on: ubuntu-latest
     steps:
