@@ -1,8 +1,8 @@
-name: 'PHP Stan'
+name: 'PHPStan'
 on: [push,pull_request]
 jobs:
   check-phpstan:
-    name: PSR-12 Code style
+    name: PHPStan CI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -21,8 +21,8 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: Install PHP_CodeSniffer composer package
+      - name: Install PHPStan composer package
         run: composer require --dev phpstan/phpstan
 
-      - name: Validate PSR-12 Code Style
-        run: ~/.composer/vendor/bin/phpcs --standard=PSR12 -p ../
+      - name: Analyse code with PHPStan
+        run: php ~/.composer/vendor/bin/phpstan -v analyze -a --memory-limit 5G --error-format=github
