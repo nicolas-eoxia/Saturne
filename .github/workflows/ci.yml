@@ -27,3 +27,6 @@ jobs:
         uses: php-actions/phpstan@v3
         with:
           configuration: phpstan.neon
+
+      - name: LS
+        run: ls
