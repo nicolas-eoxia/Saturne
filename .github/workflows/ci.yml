@@ -26,5 +26,5 @@ jobs:
       - name: PHPStan Static Analysis
         uses: php-actions/phpstan@v3
         with:
-          configuration: ../../../phpstan.neon
+          configuration: ../../../../phpstan.neon
           path: admin/ class/ core/ lib/
