@@ -10,7 +10,7 @@ jobs:
         run: git clone https://github.com/dolibarr/dolibarr -b 18.0 && pwd
 
       - name: Change directory in custom
-        run: cd htdocs/custom && pwd
+        run: cd dolibarr/htdocs/custom && pwd
 
       - name: Build Saturne 1.2.0
         run: git clone https://github.com/evarisk/saturne
