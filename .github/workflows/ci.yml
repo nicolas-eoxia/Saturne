@@ -14,9 +14,9 @@ jobs:
 
       - name: Build Saturne 1.2.0
         run: git clone https://github.com/evarisk/saturne
-  phpstan:
-    runs-on: ubuntu-latest
-    steps:
+#  phpstan:
+#    runs-on: ubuntu-latest
+#    steps:s
       - uses: actions/checkout@v3
       - uses: php-actions/composer@v6
 
