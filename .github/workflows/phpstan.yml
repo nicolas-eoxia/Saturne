@@ -1,0 +1,28 @@
+name: 'PHPStan'
+on: [push,pull_request]
+jobs:
+  check-phpstan:
+    name: PHPStan CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Get composer Cache Directory
+        id: composer-cache
+        run: echo '::set-output name=dir::$(composer config cache-files-dir)'
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install PHPStan composer package
+        run: composer require --dev phpstan/phpstan
+
+      - name: Analyse code with PHPStan
+        run: php ~/.composer/vendor/bin/phpstan -v analyze -a --memory-limit 5G --error-format=github

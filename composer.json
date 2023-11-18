@@ -1,0 +1,8 @@
+{
+    "name": "evarisk/saturne",
+    "description": "Saturne",
+    "license": "GPL-3.0-or-later",
+    "require-dev": {
+        "squizlabs/php_codesniffer": "*"
+    }
+}

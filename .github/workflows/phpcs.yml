@@ -1,0 +1,28 @@
+name: 'PHP CodeSniffer Validations'
+on: [push,pull_request]
+jobs:
+  check-phpcs:
+    name: PSR-12 Code style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Get composer Cache Directory
+        id: composer-cache
+        run: echo '::set-output name=dir::$(composer config cache-files-dir)'
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install PHP_CodeSniffer composer package
+        run: composer global require 'squizlabs/php_codesniffer=*'
+
+      - name: Validate PSR-12 Code Style
+        run: ~/.composer/vendor/bin/phpcs --standard=PSR12 -p ../
