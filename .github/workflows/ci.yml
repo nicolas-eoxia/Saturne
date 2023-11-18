@@ -14,6 +14,9 @@ jobs:
 
       - name: Build Saturne 1.2.0
         run: git clone https://github.com/evarisk/saturne
+
+      - name: Change directory in saturne
+        run: cd saturne && pwd
 #  phpstan:
 #    runs-on: ubuntu-latest
 #    steps:s
