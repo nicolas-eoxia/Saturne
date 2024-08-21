@@ -156,7 +156,7 @@ function saturne_show_medias_linked(string $modulepart = 'ecm', string $sdir, $s
 {
 	global $conf, $langs, $moduleNameUpperCase;
 
-	$sortfield = 'position_name';
+	$sortfield = 'name';
 	$sortorder = 'desc';
 
 	//	$dir  = $sdir . '/' . (dol_strlen($object->ref) > 0 ? $object->ref . '/' : '');
@@ -192,7 +192,7 @@ function saturne_show_medias_linked(string $modulepart = 'ecm', string $sdir, $s
 
 			if (($show_only_favorite && ($object->$favorite_field == $fileName || !$favoriteExists)) || !$show_only_favorite) {
 				if ($showdiv) {
-					$return .= '<div class="media-container">';
+					$return .= '<div class="media-container ' . $morecss . '">';
 				}
 
 				$return .= '<input hidden class="file-path" value="'. $filePath .'">';
