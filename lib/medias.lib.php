@@ -129,183 +129,152 @@ function saturne_show_medias(string $moduleName, string $modulepart = 'ecm', str
 /**
  * Show medias linked to an object
  *
- * @param  string      $modulepart           Submodule name
- * @param  string      $sdir                 Directory path
- * @param  int|string  $size                 Medias size
- * @param  int|string  $nbmax                Max number of medias shown per page
- * @param  int         $nbbyrow              Number of images per row
- * @param  int         $showfilename         Show filename under image
- * @param  int         $showaction           Show icon with action links
- * @param  int         $maxHeight            Media max height
- * @param  int         $maxWidth             Media max width
- * @param  int         $nolink 	             Do not add href link to image
- * @param  int         $notitle              Do not add title tag on image
- * @param  int         $usesharelink         Use the public shared link of image (if not available, the 'nophoto' image will be shown instead)
- * @param  string      $subdir               Subdir for file
- * @param  object|null $object               Object linked to show medias of
- * @param  string      $favorite_field       Name of favorite sql field of object
- * @param  int         $show_favorite_button Show or hide favorite button
- * @param  int         $show_unlink_button   Show or hide unlink button
- * @param  int         $use_mini_format      Use media mini format instead of small
- * @param  int         $show_only_favorite   Show only object favorite media
- * @param  string      $morecss              Add more CSS on link
- * @param  int         $showdiv              Add div with "media-container" class
- * @return string      $return               Show medias linked
+ * @param  string      $modulepart         Submodule name
+ * @param  string      $sdir               Directory path
+ * @param  int|string  $size               Medias size
+ * @param  int|string  $nbmax              Max number of medias shown per page
+ * @param  int         $nbbyrow            Number of images per row
+ * @param  int         $showfilename       Show filename under image
+ * @param  int         $showaction         Show icon with action links
+ * @param  int         $maxHeight          Media max height
+ * @param  int         $maxWidth           Media max width
+ * @param  int         $nolink 	           Do not add href link to image
+ * @param  int         $notitle            Do not add title tag on image
+ * @param  int         $usesharelink       Use the public shared link of image (if not available, the 'nophoto' image will be shown instead)
+ * @param  string      $subdir             Subdir for file
+ * @param  object|null $object             Object linked to show medias of
+ * @param  string      $favoriteField      Name of favorite sql field of object
+ * @param  int         $showFavoriteButton Show or hide favorite button
+ * @param  int         $show_unlink_button Show or hide unlink button
+ * @param  int         $useMiniFormat      Use media mini format instead of small
+ * @param  int         $showOnlyFavorite   Show only object favorite media
+ * @param  string      $morecss            Add more CSS on link
+ * @param  int         $showdiv            Add div with "media-container" class
+ * @return string      $return             Show medias linked
  */
-function saturne_show_medias_linked(string $modulepart = 'ecm', string $sdir, $size = 0, $nbmax = 0, int $nbbyrow = 5, int $showfilename = 0, int $showaction = 0, int $maxHeight = 120, int $maxWidth = 160, int $nolink = 0, int $notitle = 0, int $usesharelink = 0, string $subdir = '', object $object = null, string $favorite_field = 'photo', int $show_favorite_button = 1, int $show_unlink_button = 1 , int $use_mini_format = 0, int $show_only_favorite = 0, string $morecss = '', int $showdiv = 1): string
+function saturne_show_medias_linked(string $modulepart = 'ecm', string $sdir, $size = 0, $nbmax = 0, int $nbbyrow = 5, int $showfilename = 0, int $showaction = 0, int $maxHeight = 120, int $maxWidth = 160, int $nolink = 0, int $notitle = 0, int $usesharelink = 0, string $subdir = '', object $object = null, string $favoriteField = 'photo', int $showFavoriteButton = 1, int $show_unlink_button = 1 , int $useMiniFormat = 0, int $showOnlyFavorite = 0, string $morecss = '', int $showdiv = 1): string
 {
-	global $conf, $langs, $moduleNameUpperCase;
+    global $conf, $langs;
 
-	$sortfield = 'position_name';
-	$sortorder = 'desc';
+    // @todo en faire des paramètres de fonction
+    $sortField = 'date';
+    $sortOrder = 'desc';
 
-	//	$dir  = $sdir . '/' . (dol_strlen($object->ref) > 0 ? $object->ref . '/' : '');
-	//	$pdir = $subdir . '/' . (dol_strlen($object->ref) > 0 ? $object->ref . '/' : '');
+    $dir  = $sdir . (substr($sdir, -1) == '/' ? '' : '/');
+    $pDir = $subdir . (substr($subdir, -1) == '/' ? '' : '/');
 
-	$dir  = $sdir . (substr($sdir, -1) == '/' ? '' : '/');
-	$pdir = $subdir . (substr($subdir, -1) == '/' ? '' : '/');
+    $dirThumb  = $dir . 'thumbs/';
+    $pDirThumb = $pDir . 'thumbs/';
 
-	$dirthumb  = $dir . 'thumbs/';
-	$pdirthumb = $pdir . 'thumbs/';
+    $out     = '<!-- Photo -->';
+    $nbPhoto = 0;
+    $i       = 0;
 
-	$return  = '<!-- Photo -->' . "\n";
-	$nbphoto = 0;
+    $fileArray = dol_dir_list($dir, 'files', 0, '', '(\.meta|_preview.*\.png)$', $sortField, (dol_strtolower($sortOrder) == 'desc' ? SORT_DESC : SORT_ASC), 1);
+    if (!empty($fileArray)) {
+        $favoriteExists = false;
+        if ($object && property_exists($object, $favoriteField)) {
+            $fileNames      = array_column($fileArray, 'name');
+            $favoriteExists = in_array($object->$favoriteField, $fileNames, true);
+        }
+        foreach ($fileArray as $file) {
+            $fileName = $file['name'];
+            if (($showOnlyFavorite && ($object->$favoriteField == $fileName || !$favoriteExists)) || !$showOnlyFavorite) {
+                if ($showdiv) {
+                    $out .= '<div class="media-container">';
+                }
 
-	$filearray = dol_dir_list($dir, 'files', 0, '', '(\.meta|_preview.*\.png)$', $sortfield, (strtolower($sortorder) == 'desc' ? SORT_DESC : SORT_ASC), 1);
-
-	$i = 0;
-	if (count($filearray)) {
-		if ($sortfield && $sortorder) {
-			$filearray = dol_sort_array($filearray, $sortfield, $sortorder);
-		}
-		$favoriteExists = 0;
-		foreach ($filearray as $file) {
-			if ($file['name'] == $object->$favorite_field) {
-				$favoriteExists = 1;
-			}
-		}
-
-		foreach ($filearray as $file) {
-			$photo    = '';
-			$fileName = $file['name'];
-			$filePath = $file['path'];
-
-			if (($show_only_favorite && ($object->$favorite_field == $fileName || !$favoriteExists)) || !$show_only_favorite) {
-				if ($showdiv) {
-					$return .= '<div class="media-container">';
-				}
-
-				$return .= '<input hidden class="file-path" value="'. $filePath .'">';
-				$return .= '<input hidden class="file-name" value="'. $fileName .'">';
-				if (image_format_supported($fileName) >= 0) {
-					$nbphoto++;
-					$photo        = $fileName;
-					$viewfilename = $fileName;
-
-					if ($size == 1 || $size == 'small') {   // Format vignette
-						// Find name of thumb file
-						if ($use_mini_format) {
-							$photo_vignette = basename(getImageFileNameForSize($dir . $fileName, '_mini'));
-						} else {
-							$photo_vignette = basename(getImageFileNameForSize($dir . $fileName, '_small'));
-						}
-
-						if ( ! dol_is_file($dirthumb . $photo_vignette)) $photo_vignette = '';
-
-						// Get filesize of original file
-						$imgarray = dol_getImageSize($dir . $photo);
-
-						if ($nbbyrow > 0) {
-							if ($nbphoto == 1) $return .= '<table class="valigntop center centpercent" style="border: 0; padding: 2px; border-spacing: 2px; border-collapse: separate;">';
-
-							if ($nbphoto % $nbbyrow == 1) $return .= '<tr class="center valignmiddle" style="border: 1px">';
-							$return                               .= '<td style="width: ' . ceil(100 / $nbbyrow) . '%" class="photo">';
-						} elseif ($nbbyrow < 0) $return .= '<div class="inline-block">';
-
-						$return .= "\n";
-
-						$relativefile = preg_replace('/^\//', '', $pdir . $photo);
-						if (empty($nolink)) {
-							$relativefile              = preg_replace("/'/", "\\'", $relativefile);
-							$urladvanced               = getAdvancedPreviewUrl($modulepart, $relativefile, 0, 'entity=' . $conf->entity);
-							if ($urladvanced) $return .= '<a class="clicked-photo-preview" href="' . $urladvanced . '">';
-							else $return              .= '<a href="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pdir . $photo) . '" class="aphoto" target="_blank">';
-						}
-
-						// Show image (width height=$maxHeight)
-						$alt               = $langs->transnoentitiesnoconv('File') . ': ' . $relativefile;
-						$alt              .= ' - ' . $langs->transnoentitiesnoconv('Size') . ': ' . $imgarray['width'] . 'x' . $imgarray['height'];
-						if ($notitle) $alt = '';
-						if ($usesharelink) {
-                            if (empty($maxHeight) || $photo_vignette && $imgarray['height'] > $maxHeight) {
-                                $return .= '<!-- Show thumb file -->';
-                                $return .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" height="' . $maxHeight . '" src="' . DOL_URL_ROOT . '/custom/saturne/utils/viewimage.php?modulepart=' . $modulepart . '&entity=' . $object->entity . '&file=' . urlencode($pdirthumb . $photo_vignette) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
-                            } else {
-                                $return .= '<!-- Show original file -->';
-                                $return .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" src="' . DOL_URL_ROOT . '/custom/saturne/utils/viewimage.php?modulepart=' . $modulepart . '&entity=' . $object->entity . '&file=' . urlencode($pdir . $photo) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
+                $out .= '<input type="hidden" class="file-path" value="' . $file['path'] . '">';
+                $out .= '<input type="hidden" class="file-name" value="' . $fileName . '">';
+                if (image_format_supported($fileName) >= 0) {
+                    $nbPhoto++;
+                    if ($size == 'small') {
+                        if ($nbbyrow > 0) {
+                            if ($nbPhoto == 1) {
+                                $out .= '<table class="valigntop center centpercent" style="border: 0; padding: 2px; border-spacing: 2px; border-collapse: separate;">';
                             }
-						} else {
-							if (empty($maxHeight) || $photo_vignette && $imgarray['height'] > $maxHeight) {
-								$return .= '<!-- Show thumb file -->';
-								$return .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .'"  src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pdirthumb . $photo_vignette) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
-							} else {
-								$return .= '<!-- Show original file -->';
-								$return .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" height="' . $maxHeight . '" src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pdir . $photo) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
-							}
-						}
 
-						if (empty($nolink)) $return .= '</a>';
-						$return                     .= "\n";
-						if ($showfilename) $return  .= '<br>' . $viewfilename;
-						if ($showaction) {
-							$return .= '<br>';
-							if ($photo_vignette && (image_format_supported($photo) > 0) && ($object->imgWidth > $maxWidth || $object->imgHeight > $maxHeight)) {
-								$return .= '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;action=addthumb&amp;file=' . urlencode($pdir . $viewfilename) . '">' . img_picto($langs->trans('GenerateThumb'), 'refresh') . '&nbsp;&nbsp;</a>';
-							}
-						}
-						$return .= "\n";
-
-						if ($nbbyrow > 0) {
-							$return                                 .= '</td>';
-							if (($nbphoto % $nbbyrow) == 0) $return .= '</tr>';
-						} elseif ($nbbyrow < 0) $return .= '</td>';
-					}
-
-					if (empty($size)) {
-						// Format origine
-						$return .= '<img class="photo photowithmargin" src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pdir . $photo) . '" data-object-id="' . $object->id . '">';
-						if ($showfilename) {
-							$return .= '<br>' . $viewfilename;
-						}
-					}
-
-					if ($size == 'large' || $size == 'medium') {
-						$relativefile = preg_replace('/^\//', '', $pdir . $photo);
-						if (empty($nolink)) {
-							$urladvanced               = getAdvancedPreviewUrl($modulepart, $relativefile, 0, 'entity=' . $conf->entity);
-							if ($urladvanced) $return .= '<a class="clicked-photo-preview" href="' . $urladvanced . '">';
-							else $return              .= '<a href="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pdir . $photo) . '" class="aphoto" target="_blank">';
-						}
-						$widthName  = $moduleNameUpperCase . '_MEDIA_MAX_WIDTH_' . strtoupper($size);
-						$heightName = $moduleNameUpperCase . '_MEDIA_MAX_HEIGHT_' . strtoupper($size);
-						$return .= '<img width="' . $conf->global->$widthName . '" height="' . $conf->global->$heightName . '" class="photo photowithmargin" src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pdir . $photo) . '" data-object-id="' . $object->id . '">';
-						if ($showfilename) {
-                            $return .= '<br>' . $viewfilename;
+                            if ($nbPhoto % $nbbyrow == 1) {
+                                $out .= '<tr class="center valignmiddle" style="border: 1px">';
+                            }
+                            $out .= '<td style="width: ' . ceil(100 / $nbbyrow) . '%" class="photo">';
+                        } elseif ($nbbyrow < 0) {
+                            $out .= '<div class="inline-block">';
                         }
-					}
-				}
 
-				if ($show_favorite_button) {
+                        if (empty($nolink)) {
+                            $urlAdvanced = getAdvancedPreviewUrl($modulepart, $pDir . $fileName, 1, 'entity=' . $conf->entity);
+                            if ($urlAdvanced) {
+                                $out .= '<a class="clicked-photo-preview ' . $urlAdvanced['css'] . '" href="' . $urlAdvanced['url'] . '" target="' . $urlAdvanced['target'] . '" mime="' . $urlAdvanced['mime'] . '">';
+                            } else {
+                                $out .= '<a class="aphoto" href="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pDir . $fileName) . '" target="_blank">';
+                            }
+                        }
 
-					$favorite = (($object->$favorite_field == '' || $favoriteExists == 0) && $i == 0) ? 'favorite' : ($object->$favorite_field == $photo ? 'favorite' : '');
-					$return .=
-						'<div class="wpeo-button button-square-50 button-blue ' . $object->element . ' media-gallery-favorite ' . $favorite . '" value="' . $object->id . '">
-							<input class="element-linked-id" type="hidden" value="' . ($object->id > 0 ? $object->id : 0) . '">
-							<input class="filename" type="hidden" value="' . $photo . '">
-							<i class="' . ($favorite == 'favorite' ? 'fas' : 'far') . ' fa-star button-icon"></i>
-						</div>';
-				}
-				if ($show_unlink_button) {
+                        $imgArray = dol_getImageSize($dir . $fileName);
+                        $alt      = $langs->transnoentitiesnoconv('File') . ': ' . $dir . $fileName;
+                        $alt     .= ' - ' . $langs->transnoentitiesnoconv('Size') . ': ' . $imgArray['width'] . 'x' . $imgArray['height'];
+                        if ($usesharelink) {
+                            if (empty($maxHeight) || $photoVignette && $imgArray['height'] > $maxHeight) {
+                                $out .= '<!-- Show thumb file -->';
+                                $out .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" height="' . $maxHeight . '" src="' . DOL_URL_ROOT . '/custom/saturne/utils/viewimage.php?modulepart=' . $modulepart . '&entity=' . $object->entity . '&file=' . urlencode($pDirThumb . $photoVignette) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
+                            } else {
+                                $out .= '<!-- Show original file -->';
+                                $out .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" src="' . DOL_URL_ROOT . '/custom/saturne/utils/viewimage.php?modulepart=' . $modulepart . '&entity=' . $object->entity . '&file=' . urlencode($pDir . $fileName) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
+                            }
+                        } else {
+                            if (empty($maxHeight) || $photoVignette && $imgArray['height'] > $maxHeight) {
+                                $out .= '<!-- Show thumb file -->';
+                                $out .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .'"  src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pDirThumb . $photoVignette) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
+                            } else {
+                                $out .= '<!-- Show original file -->';
+                                $out .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" height="' . $maxHeight . '" src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pDir . $fileName) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
+                            }
+                        }
+
+                        if (empty($nolink)) {
+                            $out .= '</a>';
+                        }
+                        if ($nbbyrow > 0) {
+                            $out .= '</td>';
+                            if (($nbPhoto % $nbbyrow) == 0) {
+                                $out .= '</tr>';
+                            }
+                        } elseif ($nbbyrow < 0) {
+                            $out .= '</td>';
+                        }
+                    }
+
+                    switch ($size) {
+                        case 'mini' :
+                        case 'small' :
+                        case 'medium' :
+                        case 'large' :
+                            $photoVignette = basename(getImageFileNameForSize($dir . $fileName, '_' . $size));
+                            $widthName     = 'SATURNE_MEDIA_MAX_WIDTH_' . dol_strtoupper($size);
+                            $heightName    = 'SATURNE_MEDIA_MAX_HEIGHT_' . dol_strtoupper($size);
+                            if (!dol_is_file($dirThumb . $photoVignette)) {
+                                $photoVignette = '';
+                            }
+
+                            $out .= '<img width="' . $conf->global->$widthName . '" height="' . $conf->global->$heightName . '" class="photo photowithmargin" src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pDirThumb . $photoVignette) . '" title="' . dol_escape_htmltag($alt) . '" data-object-id="' . $object->id . '">';
+                            break;
+                        default :
+                            //$out .= '<img class="photo photowithmargin" src="' . DOL_URL_ROOT . '/viewimage.php?modulepart=' . $modulepart . '&entity=' . $conf->entity . '&file=' . urlencode($pDir . $fileName) . '" title="' . dol_escape_htmltag($alt) . '"  data-object-id="' . $object->id . '">';
+                            break;
+                    }
+                }
+
+                if ($showFavoriteButton && $object && property_exists($object, $favoriteField)) {
+                    $favorite = (!$favoriteExists && $i == 0) || ($object->$favoriteField == $fileName) ? 'favorite' : '';
+                    $out .=
+                        '<div class="wpeo-button button-square-50 button-blue ' . $object->element . ' media-gallery-favorite ' . $favorite . '" value="' . $object->id . '">
+                            <input type="hidden" class="filename" value="' . $fileName . '">
+                            <i class="' . ($favorite == 'favorite' ? 'fas' : 'far') . ' fa-star button-icon"></i>
+                        </div>';
+                }
+
+                if ($show_unlink_button) {
                     $confirmationParams = [
                         'picto'             => 'fontawesome_fa-unlink_fas_#e05353',
                         'color'             => '#e05353',
@@ -313,43 +282,39 @@ function saturne_show_medias_linked(string $modulepart = 'ecm', string $sdir, $s
                         'buttonParams'      => ['No' => 'button-blue marginrightonly confirmation-close', 'Yes' => 'button-red confirmation-delete']
                     ];
                     require __DIR__ . '/../core/tpl/utils/confirmation_view.tpl.php';
-                    $return .=
-						'<div class="wpeo-button button-square-50 button-grey ' . $object->element . ' media-gallery-unlink" value="' . $object->id . '">
+                    $out .=
+                        '<div class="wpeo-button button-square-50 button-grey ' . $object->element . ' media-gallery-unlink" value="' . $object->id . '">
 							<input class="element-linked-id" type="hidden" value="' . ($object->id > 0 ? $object->id : 0) . '">
 							<input class="filename" type="hidden" value="' . $photo . '">
 							<i class="fas fa-unlink button-icon"></i>
 						</div>';
-				}
-				if ($showdiv) {
-					$return .= "</div>\n";
-				}
+                }
+                if ($showdiv) {
+                    $return .= "</div>\n";
+                }
 
-                // On continue ou on arrete de boucler ?
-                if ($nbmax && $nbphoto >= $nbmax) break;
+                if ($nbmax && $nbPhoto >= $nbmax) break;
+                $i++;
+            }
+        }
 
-				$i++;
-			}
-		}
+        if ($size == 1 || $size == 'small') {
+            if ($nbbyrow > 0) {
+                while ($nbPhoto % $nbbyrow) {
+                    $out .= '<td style="width: ' . ceil(100 / $nbbyrow) . '%">&nbsp;</td>';
+                    $nbPhoto++;
+                }
 
-		if ($size == 1 || $size == 'small') {
-			if ($nbbyrow > 0) {
-				// Ferme tableau
-				while ($nbphoto % $nbbyrow) {
-					$return .= '<td style="width: ' . ceil(100 / $nbbyrow) . '%">&nbsp;</td>';
-					$nbphoto++;
-				}
-
-				if ($nbphoto) $return .= '</table>';
-			}
-		}
-	} else {
-        $return .= '<img  width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo '. $morecss .' photowithmargin" src="' . DOL_URL_ROOT . '/public/theme/common/nophoto.png" title="' . $langs->trans('NoPhotoYet') . '" data-object-id="' . $object->id . '">';
+                if ($nbPhoto) {
+                    $out .= '</table>';
+                }
+            }
+        }
+    } else {
+        $out .= '<img width="' . $maxWidth . '" height="' . $maxHeight . '" class="photo ' . $morecss . ' photowithmargin" src="' . DOL_URL_ROOT . '/public/theme/common/nophoto.png" title="' . $langs->trans('NoPhotoYet') . '" data-object-id="' . $object->id . '">';
     }
 
-	if (is_object($object)) {
-		$object->nbphoto = $nbphoto;
-	}
-	return $return;
+    return $out;
 }
 
 /**
