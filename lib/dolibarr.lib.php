@@ -530,11 +530,11 @@ function saturne_get_title_field_of_list($name, $thead = 0, $file = "", $field =
 		}
 	}
 
-	$tagend = '</'.$tag.'>';
-
     $resizeHandler = '<div class="resize-handle"></div>';
 
-	$out = $tagstart.$sortimg.$out.$tagend.$resizeHandler;
+	$tagend = $resizeHandler . '</'.$tag.'>';
+
+	$out = $tagstart.$sortimg.$out.$tagend;
 
 	return $out;
 }

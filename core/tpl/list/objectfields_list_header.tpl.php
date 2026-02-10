@@ -177,5 +177,5 @@ if (!empty($arrayOfMassActions)) {
 }
 
 print '<div class="div-table-responsive">'; // You can use div-table-responsive-no-min if you don't need reserved height for your table
-print '<table class="tagtable nobottomiftotal noborder liste' . ($moreForFilter ? ' listwithfilterbefore' : '') . '">';
-print '<thead>';
+print '<table id="dataTable" class="tagtable nobottomiftotal noborder liste' . ($moreForFilter ? ' listwithfilterbefore' : '') . '">';
+print '<thead id="tableHeader">';

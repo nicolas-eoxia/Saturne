@@ -380,3 +380,17 @@ window.saturne.utils.formatDateTime = function(date) {
   const mm = String(date.getMinutes()).padStart(2, '0');
   return `${d}/${m}/${y} ${hh}:${mm}`;
 };
+
+/**
+ * Get AJAX URL for module
+ *
+ * @since   22.1.0
+ * @version 22.1.0
+ *
+ * @param   {string} action Action name
+ * @param   {string} action Action name
+ * @return  {string} AJAX URL
+ */
+window.saturne.utils.getAjaxUrl = function(action) {
+  return '/digiquali/ajax/' + action + '.php';
+};
