@@ -123,7 +123,15 @@ $newCardButton  = ($newCardButton ?? '');
 $newCardButton .= dolGetButtonTitle($langs->trans('ViewList'), '', 'fa fa-bars imgforviewmode', $_SERVER['PHP_SELF'] . '?mode=common' . preg_replace('/([&?])*mode=[^&]+/', '', $param), '', ((empty($mode) || $mode == 'common') ? 2 : 1), ['morecss' => 'reposition']);
 $newCardButton .= dolGetButtonTitle($langs->trans('ViewKanban'), '', 'fa fa-th-list imgforviewmode', $_SERVER['PHP_SELF'] . '?mode=kanban' . preg_replace('/([&?])*mode=[^&]+/', '', $param), '', ($mode == 'kanban' ? 2 : 1), ['morecss' => 'reposition']);
 $newCardButton .= dolGetButtonTitle($langs->trans('ViewPwa'), '', 'fa fa-mobile imgforviewmode', $_SERVER['PHP_SELF'] . '?mode=pwa' . preg_replace('/([&?])*mode=[^&]+/', '', $param), '', ($mode == 'pwa' ? 2 : 1), ['morecss' => 'reposition']);
-$cardButton     = dolGetButtonTitle($langs->trans('New' . ucfirst($object->element)), $helpText ?? '', 'fa fa-plus-circle', ($createUrl ?? dol_buildpath('custom/' . $object->module . '/view/' . $object->element . '/' . $object->element . '_card.php', 1) . '?action=create' . ($moreUrlParameters ?? '')), '', $permissiontoadd);
+
+$newCardButton = <<<HTML
+    <div class="wpeo-button modal-open">
+        <input type="hidden" class="modal-options" data-modal-to-open="column_order_component">
+        <span class="fas fa-cog"></span>
+    </div>
+    HTML;
+
+$cardButton = dolGetButtonTitle($langs->trans('New' . ucfirst($object->element)), $helpText ?? '', 'fa fa-plus-circle', ($createUrl ?? dol_buildpath('custom/' . $object->module . '/view/' . $object->element . '/' . $object->element . '_card.php', 1) . '?action=create' . ($moreUrlParameters ?? '')), '', $permissiontoadd);
 
 print_barre_liste((($conf->browser->layout == 'classic' && $mode != 'pwa') ? $title : '') . ' ' . $cardButton, $page, $_SERVER['PHP_SELF'], $param, $sortfield, $sortorder, $massActionButton, $num, $nbTotalOfRecords, $object->picto, 0, $newCardButton, '', $limit, 0, 0, 1);
 
@@ -146,26 +154,26 @@ if ($searchAll) {
     print '<div class="divsearchfieldfilter">' . $langs->trans('FilterOnInto', $searchAll) . implode(', ', $fieldsToSearchAll) . '</div>';
 }
 
-$moreForFilter = '';
-if (isModEnabled('categorie') && $user->hasRight('categorie', 'read') && isset($categorie->MAP_OBJ_CLASS[$object->element])) {
-    require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcategory.class.php';
-    $formCategory   = new FormCategory($db);
-    $moreForFilter .= $formCategory->getFilterBox($object->element, $searchCategories);
-}
+//$moreForFilter = '';
+//if (isModEnabled('categorie') && $user->hasRight('categorie', 'read') && isset($categorie->MAP_OBJ_CLASS[$object->element])) {
+//    require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcategory.class.php';
+//    $formCategory   = new FormCategory($db);
+//    $moreForFilter .= $formCategory->getFilterBox($object->element, $searchCategories);
+//}
+//
+//$parameters = ['arrayfields' => &$arrayfields];
+//$reshook    = $hookmanager->executeHooks('printFieldPreListTitle', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
+//if (empty($reshook)) {
+//    $moreForFilter .= $hookmanager->resPrint;
+//} else {
+//    $moreForFilter = $hookmanager->resPrint;
+//}
 
-$parameters = ['arrayfields' => &$arrayfields];
-$reshook    = $hookmanager->executeHooks('printFieldPreListTitle', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
-if (empty($reshook)) {
-    $moreForFilter .= $hookmanager->resPrint;
-} else {
-    $moreForFilter = $hookmanager->resPrint;
-}
-
-if (!empty($moreForFilter)) {
-    print '<div class="liste_titre liste_titre_bydiv centpercent">';
-    print $moreForFilter;
-    print '</div>';
-}
+//if (!empty($moreForFilter)) {
+//    print '<div class="liste_titre liste_titre_bydiv centpercent">';
+//    print $moreForFilter;
+//    print '</div>';
+//}
 
 $selectedFields = '';
 if ($mode != 'pwa' && $mode != 'kanban') {

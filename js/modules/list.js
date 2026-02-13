@@ -416,3 +416,45 @@ window.saturne.columnDrag.setSelectors = function(tableId, headerId) {
   window.saturne.columnDrag.headerSelector = headerId;
 };
 
+$(function() {
+
+  $("#columnManagerDialog").dialog({
+    autoOpen: false,
+    width: 400,
+    modal: true,
+    buttons: {
+      "Sauvegarder": function() {
+        saveColumns();
+      }
+    }
+  });
+
+  $("#manageColumnsBtn").click(function() {
+    $("#columnManagerDialog").dialog("open");
+  });
+
+  $("#sortableColumns").sortable({
+    placeholder: "ui-state-highlight"
+  });
+
+});
+
+function saveColumns() {
+
+  let columns = [];
+
+  $("#sortableColumns li").each(function() {
+
+    if ($(this).find('input').is(':checked')) {
+      columns.push($(this).data('key'));
+    }
+
+  });
+
+  $.post("ajax/save_columns.php", {
+    element: "monobjet",
+    columns: JSON.stringify(columns)
+  }, function() {
+    location.reload();
+  });
+}

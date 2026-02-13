@@ -102,7 +102,7 @@ while ($i < $iMaxInLoop) {
 
         // Fields
         foreach ($object->fields as $key => $val) {
-            $cssForField = saturne_css_for_field($val, $key);
+            //$cssForField = saturne_css_for_field($val, $key);
             if (!empty($arrayfields['t.' . $key]['checked'])) {
                 print '<td' . ($cssForField ? ' class="' . $cssForField . ((preg_match('/tdoverflow/', $cssForField) && !in_array($val['type'], ['ip', 'url']) && !is_numeric($object->$key)) ? ' classfortooltip' : '') . '"' : '');
                 if (preg_match('/tdoverflow/', $cssForField) && !in_array($val['type'], ['ip', 'url']) && !is_numeric($object->$key) && $key != 'ref') {

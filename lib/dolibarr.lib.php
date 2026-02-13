@@ -450,14 +450,15 @@ function saturne_get_title_field_of_list($name, $thead = 0, $file = "", $field =
 	$tmpfield = explode(',', $field);
 	$field1 = trim($tmpfield[0]); // If $field is 'd.datep,d.id', it becomes 'd.datep'
 
+    $prefix = '';
 	if (!getDolGlobalString('MAIN_DISABLE_WRAPPING_ON_COLUMN_TITLE') && empty($forcenowrapcolumntitle)) {
-		$prefix = 'wrapcolumntitle '.$prefix;
+		//$prefix = 'wrapcolumntitle '.$prefix;
 	}
 
 	//var_dump('field='.$field.' field1='.$field1.' sortfield='.$sortfield.' sortfield1='.$sortfield1);
 	// If field is used as sort criteria we use a specific css class liste_titre_sel
 	// Example if (sortfield,field)=("nom","xxx.nom") or (sortfield,field)=("nom","nom")
-	$liste_titre = 'liste_titre';
+	$liste_titre = '';
 	if ($field1 && ($sortfield1 == $field1 || $sortfield1 == preg_replace("/^[^\.]+\./", "", $field1))) {
 		$liste_titre = 'liste_titre_sel';
 	}
