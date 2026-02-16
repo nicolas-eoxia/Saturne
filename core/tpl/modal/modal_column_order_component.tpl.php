@@ -43,14 +43,49 @@
         </div>
         <!-- Modal-Content -->
         <div class="modal-content">
-            <div class="answer-task-container">
+            <!-- Search -->
+            <div class="column-search">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="columnSearchInput" placeholder="Rechercher une colonne...">
+            </div>
+
+            <!-- Column List -->
+            <ul class="column-list" id="sortableColumns">
+                <?php foreach ($object->fields as $key => $value) { ?>
+                    <li class="column-item" data-column-name="<?php echo $key; ?>">
+                        <span class="drag-handle">☰</span>
+                        <span class="column-name"><?php echo $value['label']; ?></span>
+                        <span class="visibility-toggle">
+                            <input type="checkbox" class="visibility-checkbox" checked>
+                        </span>
+                    </li>
+                <?php } ?>
+            </ul>
+
+            <!-- Stats -->
+            <div class="column-stats">
+                <div class="stat-item">
+                    <span>Visibles:</span>
+                    <span class="stat-value" id="visibleCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Cachées:</span>
+                    <span class="stat-value" id="hiddenCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Total:</span>
+                    <span class="stat-value" id="totalCount">0</span>
+                </div>
             </div>
         </div>
         <!-- Modal-Footer -->
         <div class="modal-footer">
-            <div class="wpeo-button modal-close" id="update_badge_component">
-                <i class="fas fa-save pictofixedwidth"></i><?php echo $langs->trans('Save'); ?>
-            </div>
+            <button class="btn btn-secondary" id="resetBtn">
+                🔄 Réinitialiser
+            </button>
+            <button class="btn btn-primary" id="saveBtn">
+                💾 Sauvegarder
+            </button>
         </div>
     </div>
 </div>
