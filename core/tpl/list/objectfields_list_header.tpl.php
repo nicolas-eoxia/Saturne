@@ -127,7 +127,7 @@ $newCardButton .= dolGetButtonTitle($langs->trans('ViewPwa'), '', 'fa fa-mobile 
 $newCardButton = <<<HTML
     <div class="wpeo-button modal-open">
         <input type="hidden" class="modal-options" data-modal-to-open="column_order_component">
-        <span class="fas fa-cog"></span>
+        <span class="fas fa-list-ol"></span>
     </div>
     HTML;
 

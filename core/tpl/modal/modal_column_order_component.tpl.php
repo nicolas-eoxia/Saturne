@@ -35,7 +35,7 @@
             <h2 class="modal-title"></h2>
             <?php
                 echo saturne_get_modal_header_recap_html([
-                    'iconClass' => 'fas fa-cog', // L'icône que vous voulez pour le header
+                    'iconClass' => 'fas fa-list-ol', // L'icône que vous voulez pour le header
                     'title'     => 'test',       // Le nom du fournisseur/entité
                 ]);
             ?>
@@ -52,7 +52,7 @@
             <!-- Column List -->
             <ul class="column-list" id="sortableColumns">
                 <?php foreach ($object->fields as $key => $value) { ?>
-                    <li class="column-item" data-column-name="<?php echo $key; ?>">
+                    <li class="column-item" data-key="<?php echo $key; ?>">
                         <span class="drag-handle">☰</span>
                         <span class="column-name"><?php echo $value['label']; ?></span>
                         <span class="visibility-toggle">

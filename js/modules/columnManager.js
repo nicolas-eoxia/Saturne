@@ -38,8 +38,7 @@ window.saturne.columnManager = {};
  * @since   22.1.0
  * @version 22.1.0
  */
-window.saturne.columnManager.columns    = [];
-window.saturne.columnManager.storageKey = 'digiquali_column_config';
+window.saturne.columnManager.saveTimeout = null;
 
 /**
  * Column manager init
@@ -50,9 +49,9 @@ window.saturne.columnManager.storageKey = 'digiquali_column_config';
  * @return {void}
  */
 window.saturne.columnManager.init = function init() {
-  window.saturne.columnManager.loadColumns();
-  window.saturne.columnManager.setupSortable();
   window.saturne.columnManager.event();
+  window.saturne.columnManager.setupSortable();
+  window.saturne.columnManager.updateStats();
 };
 
 /**
@@ -66,9 +65,8 @@ window.saturne.columnManager.init = function init() {
 window.saturne.columnManager.event = function initializeEvents() {
   // Toggle visibility
   $(document).on('change', '#sortableColumns input[type="checkbox"]', function() {
-    var columnKey = $(this).closest('.column-item').data('key');
-    var isVisible = $(this).is(':checked');
-    window.saturne.columnManager.toggleColumnVisibility(columnKey, isVisible);
+    window.saturne.columnManager.updateStats();
+    window.saturne.columnManager.saveColumns(true, 500);
   });
 
   // Search
@@ -78,7 +76,7 @@ window.saturne.columnManager.event = function initializeEvents() {
 
   // Save
   $('#saveBtn').on('click', function() {
-    window.saturne.columnManager.saveColumns();
+    window.saturne.columnManager.saveColumns(false);
   });
 
   // Reset
@@ -113,7 +111,7 @@ window.saturne.columnManager.setupSortable = function() {
 
     stop: function(event, ui) {
       console.log('✋ Fin drag:', ui.item.data('key'));
-      window.saturne.columnManager.updateColumnOrder();
+      window.saturne.columnManager.saveColumns(true, 500);
     },
 
     change: function(event, ui) {
@@ -129,152 +127,102 @@ window.saturne.columnManager.setupSortable = function() {
 // ==========================================
 
 /**
- * Load columns
+ * Get column order from DOM
  *
  * @since   1.0.0
  * @version 1.0.0
  *
- * @return {void}
+ * @return {array} Array of column keys
  */
-window.saturne.columnManager.loadColumns = function() {
-  var saved = localStorage.getItem(window.saturne.columnManager.storageKey);
-
-  if (saved) {
-    try {
-      window.saturne.columnManager.columns = JSON.parse(saved);
-      console.log('✅ Colonnes chargées:', window.saturne.columnManager.columns.length);
-    } catch (e) {
-      console.error('❌ Erreur parsing:', e);
-      window.saturne.columnManager.loadDefaultColumns();
-    }
-  } else {
-    window.saturne.columnManager.loadDefaultColumns();
-  }
-};
-
-/**
- * Load default columns
- *
- * @since   1.0.0
- * @version 1.0.0
- *
- * @return {void}
- */
-window.saturne.columnManager.loadDefaultColumns = function() {
-  window.saturne.columnManager.columns = [
-    { key: 'technicalid', label: 'TechnicalID', field: 'TechnicalID', visible: true },
-    { key: 'ref', label: 'Ref', field: 'Ref', visible: true },
-    { key: 'label', label: 'Label', field: 'Label', visible: true },
-    { key: 'description', label: 'Description', field: 'Description', visible: true },
-    { key: 'numberofpoints', label: 'NumberOfPoints', field: 'NumberOfPoints', visible: true },
-    { key: 'refext', label: 'RefExt', field: 'RefExt', visible: true },
-    { key: 'entity', label: 'Entity', field: 'Entity', visible: true },
-    { key: 'datecreation', label: 'DateCreation', field: 'DateCreation', visible: true },
-    { key: 'datemodification', label: 'DateModification', field: 'DateModification', visible: true },
-    { key: 'importid', label: 'ImportId', field: 'ImportId', visible: true },
-    { key: 'status', label: 'Status', field: 'Status', visible: true },
-    { key: 'type', label: 'Type', field: 'Type', visible: true },
-    { key: 'showphoto', label: 'ShowPhoto', field: 'ShowPhoto', visible: false },
-    { key: 'authorizeanswerphoto', label: 'AuthorizeAnswerPhoto', field: 'AuthorizeAnswerPhoto', visible: false },
-    { key: 'entercomment', label: 'EnterComment', field: 'EnterComment', visible: false },
-    { key: 'photook', label: 'PhotoOK', field: 'PhotoOK', visible: false },
-    { key: 'photoko', label: 'PhotoKO', field: 'PhotoKO', visible: false },
-    { key: 'json', label: 'JSON', field: 'JSON', visible: false },
-    { key: 'userauthor', label: 'UserAuthor', field: 'UserAuthor', visible: false },
-    { key: 'usermodif', label: 'UserModif', field: 'UserModif', visible: false }
-  ];
-
-  console.log('✅ Colonnes par défaut:', window.saturne.columnManager.columns.length);
-};
-
-/**
- * Render column list
- *
- * @since   1.0.0
- * @version 1.0.0
- *
- * @return {void}
- */
-window.saturne.columnManager.renderColumnList = function() {
-  var $list = $('#sortableColumns');
-  $list.empty();
-
-  $.each(window.saturne.columnManager.columns, function(index, column) {
-    var checked = column.visible ? 'checked' : '';
-
-    var $item = $('<li>', {
-      'class': 'column-item',
-      'data-key': column.key
-    });
-
-    var $dragHandle = $('<div>', { 'class': 'drag-handle' })
-      .append($('<div>', { 'class': 'drag-line' }))
-      .append($('<div>', { 'class': 'drag-line' }))
-      .append($('<div>', { 'class': 'drag-line' }));
-
-    var $columnInfo = $('<div>', { 'class': 'column-info' })
-      .append($('<div>', { 'class': 'column-name', text: column.label }))
-      .append($('<div>', { 'class': 'column-field', text: column.field }));
-
-    var $toggle = $('<label>', { 'class': 'toggle-switch' })
-      .append($('<input>', { type: 'checkbox', checked: column.visible }))
-      .append($('<span>', { 'class': 'toggle-slider' }));
-
-    $item.append($dragHandle).append($columnInfo).append($toggle);
-    $list.append($item);
-  });
-
-  window.saturne.columnManager.updateStats();
-  console.log('✅ Liste rendue');
-};
-
-/**
- * Update column order
- *
- * @since   1.0.0
- * @version 1.0.0
- *
- * @return {void}
- */
-window.saturne.columnManager.updateColumnOrder = function() {
-  var newOrder = [];
+window.saturne.columnManager.getColumnOrder = function() {
+  var order = [];
 
   $('#sortableColumns .column-item').each(function() {
-    var columnKey = $(this).data('key');
-    var column = $.grep(window.saturne.columnManager.columns, function(col) {
-      return col.key === columnKey;
-    })[0];
-
-    if (column) {
-      newOrder.push(column);
-    }
+    order.push($(this).data('key'));
   });
 
-  window.saturne.columnManager.columns = newOrder;
-  console.log('📋 Ordre mis à jour');
+  return order;
 };
 
+// /**
+//  * Update column order
+//  *
+//  * @since   1.0.0
+//  * @version 1.0.0
+//  *
+//  * @return {void}
+//  */
+// window.saturne.columnManager.updateColumnOrder = function() {
+//   var newOrder = [];
+//
+//   $('#sortableColumns .column-item').each(function() {
+//     var columnKey = $(this).data('key');
+//     var column = $.grep(window.saturne.columnManager.columns, function(col) {
+//       return col.key === columnKey;
+//     })[0];
+//
+//     if (column) {
+//       newOrder.push(column);
+//     }
+//   });
+//
+//   window.saturne.columnManager.columns = newOrder;
+//   console.log('📋 Ordre mis à jour');
+//
+//     $.ajax({
+//         url: '/custom/saturne/ajax/updateColumnOrder.php',
+//         method: 'POST',
+//         data: { columns: window.saturne.columnManager.columns },
+//         success: function(response) {
+//         console.log('✅ Ordre sauvegardé en base');
+//         },
+//         error: function(xhr, status, error) {
+//         console.error('❌ Erreur sauvegarde ordre:', error);
+//         }
+//     });
+// };
+
 /**
- * Toggle column visibility
+ * Get column visibility from DOM
  *
  * @since   1.0.0
  * @version 1.0.0
  *
- * @param   {string} columnKey Column key
- * @param   {boolean} isVisible Visibility state
- * @return  {void}
+ * @return {object} Object with column keys and visibility
  */
-window.saturne.columnManager.toggleColumnVisibility = function(columnKey, isVisible) {
-  var column = $.grep(window.saturne.columnManager.columns, function(col) {
-    return col.key === columnKey;
-  })[0];
+window.saturne.columnManager.getColumnVisibility = function() {
+  var visibility = {};
 
-  if (column) {
-    column.visible = isVisible;
-    window.saturne.columnManager.updateStats();
-    console.log('👁️ Toggle:', columnKey, isVisible);
-  }
+  $('#sortableColumns .column-item').each(function() {
+    var key = $(this).data('key');
+    var isVisible = $(this).find('input[type="checkbox"]').is(':checked');
+    visibility[key] = isVisible;
+  });
+
+  return visibility;
 };
+
+// /**
+//  * Toggle column visibility
+//  *
+//  * @since   1.0.0
+//  * @version 1.0.0
+//  *
+//  * @param   {string} columnKey Column key
+//  * @param   {boolean} isVisible Visibility state
+//  * @return  {void}
+//  */
+// window.saturne.columnManager.toggleColumnVisibility = function(columnKey, isVisible) {
+//   var column = $.grep(window.saturne.columnManager.columns, function(col) {
+//     return col.key === columnKey;
+//   })[0];
+//
+//   if (column) {
+//     column.visible = isVisible;
+//     window.saturne.columnManager.updateStats();
+//     console.log('👁️ Toggle:', columnKey, isVisible);
+//   }
+// };
 
 /**
  * Filter columns
@@ -294,9 +242,9 @@ window.saturne.columnManager.filterColumns = function(searchTerm) {
     var field = $item.find('.column-field').text().toLowerCase();
 
     if (label.indexOf(term) !== -1 || field.indexOf(term) !== -1) {
-      $item.show();
+      $item.removeClass('hidden');
     } else {
-      $item.hide();
+      $item.addClass('hidden');
     }
   });
 
@@ -312,15 +260,9 @@ window.saturne.columnManager.filterColumns = function(searchTerm) {
  * @return {void}
  */
 window.saturne.columnManager.updateStats = function() {
-  var visible = $.grep(window.saturne.columnManager.columns, function(col) {
-    return col.visible;
-  }).length;
-
-  var hidden = $.grep(window.saturne.columnManager.columns, function(col) {
-    return !col.visible;
-  }).length;
-
-  var total = window.saturne.columnManager.columns.length;
+  var visible = $('#sortableColumns input[type="checkbox"]:checked').length;
+  var total = $('#sortableColumns .column-item').length;
+  var hidden = total - visible;
 
   $('#visibleCount').text(visible);
   $('#hiddenCount').text(hidden);
@@ -333,26 +275,104 @@ window.saturne.columnManager.updateStats = function() {
 // SAVE / RESET
 // ==========================================
 
+// /**
+//  * Save columns
+//  *
+//  * @since   1.0.0
+//  * @version 1.0.0
+//  *
+//  * @return {void}
+//  */
+// window.saturne.columnManager.saveColumns = function() {
+//   window.saturne.columnManager.updateColumnOrder();
+//
+//   localStorage.setItem(
+//     window.saturne.columnManager.storageKey,
+//     JSON.stringify(window.saturne.columnManager.columns)
+//   );
+//
+//   console.log('✅ Configuration sauvegardée');
+//
+//   window.saturne.columnManager.closeModal();
+//   alert('Configuration des colonnes sauvegardée !');
+// };
+
 /**
- * Save columns
+ * Save columns avec debounce
  *
  * @since   1.0.0
  * @version 1.0.0
  *
+ * @param   {boolean} silent Si true, pas de notification ni rechargement
+ * @param   {number}  delay  Délai en ms avant la sauvegarde (défaut: 500)
  * @return {void}
  */
-window.saturne.columnManager.saveColumns = function() {
-  window.saturne.columnManager.updateColumnOrder();
+window.saturne.columnManager.saveColumns = function(silent, delay) {
+  silent = silent || false;
+  delay = delay || 500; // 500ms par défaut
 
-  localStorage.setItem(
-    window.saturne.columnManager.storageKey,
-    JSON.stringify(window.saturne.columnManager.columns)
-  );
+  // Annuler la sauvegarde précédente si elle existe
+  if (window.saturne.columnManager.saveTimeout) {
+    clearTimeout(window.saturne.columnManager.saveTimeout);
+  }
 
-  console.log('✅ Configuration sauvegardée');
+  // Si mode normal (bouton), sauvegarder immédiatement
+  if (!silent) {
+    window.saturne.columnManager.executeSave(silent);
+    return;
+  }
 
-  window.saturne.columnManager.closeModal();
-  alert('Configuration des colonnes sauvegardée !');
+  // Si mode silent (auto-save), attendre le délai
+  window.saturne.columnManager.saveTimeout = setTimeout(function() {
+    window.saturne.columnManager.executeSave(silent);
+  }, delay);
+};
+
+/**
+ * Execute save (fonction interne)
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param   {boolean} silent Si true, pas de notification ni rechargement
+ * @return {void}
+ */
+window.saturne.columnManager.executeSave = function(silent) {
+  var columnOrder = window.saturne.columnManager.getColumnOrder();
+  var columnVisibility = window.saturne.columnManager.getColumnVisibility();
+
+  let token          = window.saturne.toolbox.getToken();
+  let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
+
+  console.log('💾 Sauvegarde en cours...');
+
+  var ajaxUrl = document.URL + querySeparator + 'action=save_columns&token=' + token;
+
+  $.ajax({
+    url: ajaxUrl,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      column_order: columnOrder,
+      column_visibility: columnVisibility
+    }),
+    success: function(response) {
+      var $newTable = $(response).find('.div-table-responsive');
+      $('.div-table-responsive').replaceWith($newTable);
+
+      if (!silent) {
+        window.saturne.columnManager.closeModal();
+        location.reload();
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error('❌ Erreur sauvegarde:', error);
+
+      if (!silent) {
+        alert('Erreur lors de la sauvegarde');
+      }
+    }
+  });
 };
 
 /**
@@ -364,11 +384,28 @@ window.saturne.columnManager.saveColumns = function() {
  * @return {void}
  */
 window.saturne.columnManager.resetColumns = function() {
-  if (confirm('Voulez-vous vraiment réinitialiser ?')) {
-    localStorage.removeItem(window.saturne.columnManager.storageKey);
-    window.saturne.columnManager.loadDefaultColumns();
-    window.saturne.columnManager.renderColumnList();
+  // if (confirm('Voulez-vous vraiment réinitialiser ?')) {
+  //   localStorage.removeItem(window.saturne.columnManager.storageKey);
+  //   window.saturne.columnManager.loadDefaultColumns();
+  //   window.saturne.columnManager.renderColumnList();
+  //
+  //   console.log('🔄 Colonnes réinitialisées');
+  // }
 
-    console.log('🔄 Colonnes réinitialisées');
+  if (confirm('Voulez-vous vraiment réinitialiser ?')) {
+    $.ajax({
+      url: 'ajax/save_columns.php', // À adapter
+      method: 'POST',
+      data: {
+        action: 'reset_columns'
+      },
+      success: function(response) {
+        console.log('🔄 Colonnes réinitialisées');
+        location.reload();
+      },
+      error: function(xhr, status, error) {
+        console.error('❌ Erreur réinitialisation:', error);
+      }
+    });
   }
 };
