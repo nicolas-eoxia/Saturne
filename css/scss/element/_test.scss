@@ -385,3 +385,7 @@
     gap: 10px;
   }
 }
+
+#column_order_component.wpeo-modal.modal-active {
+  z-index: 1010;
+}
