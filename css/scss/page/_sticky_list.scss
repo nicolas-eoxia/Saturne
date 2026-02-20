@@ -1,0 +1,24 @@
+.table-fiche-title {
+  position: sticky;
+  top: 52px;
+  z-index: 1005;
+  background: #fff;
+}
+
+.liste_titre_bydiv {
+  position: sticky;
+  top: 112px;
+  z-index: 1005;
+}
+
+.div-table-responsive {
+  thead {
+    position: sticky;
+    top: 161.55px;
+    z-index: 1005;
+  }
+}
+
+div.fiche>form>div.div-table-responsive {
+  overflow-x: unset;
+}
