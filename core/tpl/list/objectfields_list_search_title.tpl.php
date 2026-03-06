@@ -43,8 +43,7 @@ if (getDolGlobalString('MAIN_CHECKBOX_LEFT_COLUMN')) {
 }
 
 foreach ($object->fields as $key => $val) {
-    $cssForField  = '';
-    //$cssForField .= saturne_css_for_field($val, $key);
+    $cssForField = saturne_css_for_field($val, $key);
     if (!empty($arrayfields['t.' . $key]['checked'])) {
         print saturne_get_title_field_of_list($arrayfields['t.' . $key]['label'], 0, $_SERVER['PHP_SELF'], 't.' . $key, '', $param, 'data-column="' . $key . '"' . ($cssForField ? 'class="' . $cssForField . '"' : ''), $sortfield, $sortorder, ($cssForField ? $cssForField . ' ' : ''), (empty($val['disablesort']) ? '' : $val['disablesort']), (empty($val['helplist']) ? '' : $val['helplist']));
         $totalarray['nbfield']++;

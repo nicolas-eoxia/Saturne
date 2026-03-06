@@ -124,12 +124,22 @@ $newCardButton .= dolGetButtonTitle($langs->trans('ViewList'), '', 'fa fa-bars i
 $newCardButton .= dolGetButtonTitle($langs->trans('ViewKanban'), '', 'fa fa-th-list imgforviewmode', $_SERVER['PHP_SELF'] . '?mode=kanban' . preg_replace('/([&?])*mode=[^&]+/', '', $param), '', ($mode == 'kanban' ? 2 : 1), ['morecss' => 'reposition']);
 $newCardButton .= dolGetButtonTitle($langs->trans('ViewPwa'), '', 'fa fa-mobile imgforviewmode', $_SERVER['PHP_SELF'] . '?mode=pwa' . preg_replace('/([&?])*mode=[^&]+/', '', $param), '', ($mode == 'pwa' ? 2 : 1), ['morecss' => 'reposition']);
 
+$modalUrl   = dol_buildpath('saturne/core/tpl/modal/modal_column_order_component.tpl.php', 1);
+$modalTitle = $langs->trans('ColumnOrder');
+
 $newCardButton = <<<HTML
-    <div class="wpeo-button modal-open">
-        <input type="hidden" class="modal-options" data-modal-to-open="column_order_component">
+    <div class="wpeo-button"
+         id="btn-column-order"
+         data-dialog-id="dialog-column-order"
+         data-dialog-title="$modalTitle"
+         data-dialog-icon="fas fa-list-ol"
+         data-dialog-align="right"
+         data-dialog-url="$modalUrl"
+         data-module-name="$object->module"
+         data-object-type="$object->element">
         <span class="fas fa-list-ol"></span>
     </div>
-    HTML;
+HTML;
 
 $cardButton = dolGetButtonTitle($langs->trans('New' . ucfirst($object->element)), $helpText ?? '', 'fa fa-plus-circle', ($createUrl ?? dol_buildpath('custom/' . $object->module . '/view/' . $object->element . '/' . $object->element . '_card.php', 1) . '?action=create' . ($moreUrlParameters ?? '')), '', $permissiontoadd);
 

@@ -102,15 +102,15 @@ while ($i < $iMaxInLoop) {
 
         // Fields
         foreach ($object->fields as $key => $val) {
-            //$cssForField = saturne_css_for_field($val, $key);
+            $cssForField = saturne_css_for_field($val, $key);
             if (!empty($arrayfields['t.' . $key]['checked'])) {
-                print '<td' . ($cssForField ? ' class="' . $cssForField . ((preg_match('/tdoverflow/', $cssForField) && !in_array($val['type'], ['ip', 'url']) && !is_numeric($object->$key)) ? ' classfortooltip' : '') . '"' : '');
+                print '<td data-field="' . $key . '"' . ($cssForField ? ' class="' . $cssForField . ((preg_match('/tdoverflow/', $cssForField) && !in_array($val['type'], ['ip', 'url']) && !is_numeric($object->$key)) ? ' classfortooltip' : '') . '"' : '');
                 if (preg_match('/tdoverflow/', $cssForField) && !in_array($val['type'], ['ip', 'url']) && !is_numeric($object->$key) && $key != 'ref') {
                     print ' title="' . dol_escape_htmltag($object->$key) . '"';
                 }
                 print '>';
 
-                $parameters = ['arrayfields' => $arrayfields, 'key' => $key, 'val' => $val];
+                $parameters = ['arrayfields' => $arrayfields, 'object' => $object, 'obj' => $obj, 'key' => $key, 'val' => $val, 'i' => $i, 'totalarray' => &$totalarray];
                 $hookmanager->executeHooks('saturnePrintFieldListLoopObject', $parameters, $object);
                 if (!empty($hookmanager->resArray[$key])) {
                     print $hookmanager->resArray[$key];
