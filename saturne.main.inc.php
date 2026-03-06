@@ -43,17 +43,11 @@ if (!$res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i + 1))). '/main.in
     $res = @include dirname(substr($tmp, 0, ($i + 1))). '/main.inc.php';
 }
 // Try main.inc.php using relative path
-if (!$res && file_exists('../main.inc.php')) {
-    $res = @include '../main.inc.php';
-}
-if (!$res && file_exists('../../main.inc.php')) {
-    $res = @include '../../main.inc.php';
-}
-if (!$res && file_exists('../../../main.inc.php')) {
-    $res = @include '../../../main.inc.php';
-}
-if (!$res && file_exists('../../../../main.inc.php')) {
-    $res = @include '../../../../main.inc.php';
+for ($i = 1; $i <= 10; $i++) {
+    $path = str_repeat('../', $i);
+    if (!$res && file_exists($path . 'main.inc.php')) {
+        $res = @include $path . 'main.inc.php';
+    }
 }
 if (!$res) {
     die('Include of main fails');

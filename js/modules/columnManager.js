@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
- * Library javascript to enable Browser notifications
+ * Library javascript to manage column order and visibility
  */
 
 /**
@@ -25,7 +25,8 @@
 'use strict';
 
 /**
- * Init column manager
+ * Initializes the "columnManager" object along with the mandatory "init" method
+ * required by the Saturne library.
  *
  * @since   22.1.0
  * @version 22.1.0
@@ -33,7 +34,8 @@
 window.saturne.columnManager = {};
 
 /**
- * Column manager properties
+ * Debounce timer for auto-save — prevents flooding the server with requests
+ * when the user drags or toggles visibility rapidly.
  *
  * @since   22.1.0
  * @version 22.1.0
@@ -41,98 +43,112 @@ window.saturne.columnManager = {};
 window.saturne.columnManager.saveTimeout = null;
 
 /**
- * Column manager init
+ * The method automatically called by the Saturne library.
+ *
+ * Only binds delegated events on document — DOM elements are not yet available
+ * at this point. All direct DOM bindings and JS initializations are deferred
+ * to setup(), called by ui-dialogs.js onLoad after AJAX content injection.
  *
  * @since   22.1.0
  * @version 22.1.0
  *
  * @return {void}
  */
-window.saturne.columnManager.init = function init() {
+window.saturne.columnManager.init = function() {
   window.saturne.columnManager.event();
+};
+
+/**
+ * The method containing all delegated events for the column manager.
+ *
+ * Uses event delegation on document so bindings remain active regardless
+ * of when the dialog content is injected or removed from the DOM.
+ *
+ * @since   22.1.0
+ * @version 22.1.0
+ *
+ * @return {void}
+ */
+window.saturne.columnManager.event = function() {
+  // Auto-save on visibility toggle — delegated, works before DOM injection.
+  $(document).on('change', '#sortableColumns .toggle input[type="checkbox"]', function() {
+    window.saturne.columnManager.updateStats();
+    window.saturne.columnManager.saveColumns(true, 500);
+  });
+};
+
+/**
+ * Sets up the column manager after AJAX content injection.
+ *
+ * Called by ui-dialogs.js onLoad callback once the dialog content is injected
+ * into the DOM. Binds direct element listeners and initializes Sortable and
+ * stats — all of which require #sortableColumns, #saveBtn, #resetBtn and
+ * #columnSearchInput to exist in the DOM first.
+ *
+ * @since   22.1.0
+ * @version 22.1.0
+ *
+ * @return {void}
+ */
+window.saturne.columnManager.setup = function() {
+  // Bind directly now that DOM elements exist.
+  $('#columnSearchInput').on('input', function() {
+    window.saturne.columnManager.filterColumns($(this).val());
+  });
+
+  $('#saveBtn').on('click', function() {
+    window.saturne.columnManager.saveColumns(false);
+  });
+
+  $('#resetBtn').on('click', function() {
+    window.saturne.columnManager.resetColumns();
+  });
+
   window.saturne.columnManager.setupSortable();
   window.saturne.columnManager.updateStats();
 };
 
 /**
- * Column manager event initialization. Binds all necessary event listeners
+ * Initializes jQuery UI Sortable on the column list.
+ *
+ * Uses forcePlaceholderSize and a start callback to ensure the placeholder
+ * always matches the dragged item's height, preventing layout jumps.
+ * The revert option animates the item back to its original position if the
+ * drop is cancelled.
  *
  * @since   22.1.0
  * @version 22.1.0
  *
  * @return {void}
  */
-window.saturne.columnManager.event = function initializeEvents() {
-  // Toggle visibility
-  $(document).on('change', '#sortableColumns input[type="checkbox"]', function() {
-    window.saturne.columnManager.updateStats();
-    window.saturne.columnManager.saveColumns(true, 500);
-  });
-
-  // Search
-  $('#columnSearchInput').on('input', function() {
-    window.saturne.columnManager.filterColumns($(this).val());
-  });
-
-  // Save
-  $('#saveBtn').on('click', function() {
-    window.saturne.columnManager.saveColumns(false);
-  });
-
-  // Reset
-  $('#resetBtn').on('click', function() {
-    window.saturne.columnManager.resetColumns();
-  });
-};
-
-// ==========================================
-// SORTABLE SETUP
-// ==========================================
-
-/**
- * Setup jQuery UI Sortable
- *
- * @since   1.0.0
- * @version 1.0.0
- *
- * @return {void}
- */
 window.saturne.columnManager.setupSortable = function() {
   $('#sortableColumns').sortable({
-    handle: '.drag-handle',
-    placeholder: 'ui-state-highlight',
-    cursor: 'move',
-    axis: 'y',
-    tolerance: 'pointer',
+    handle               : '.drag-handle',
+    placeholder          : 'column-item ui-state-highlight',
+    cursor               : 'grabbing',
+    axis                 : 'y',
+    tolerance            : 'pointer',
+    opacity              : 1,     // Opacity managed by CSS.
+    revert               : 150,   // Smooth animation back on cancelled drop.
+    forcePlaceholderSize : true,  // Placeholder keeps the dragged item height.
 
     start: function(event, ui) {
-      console.log('🎯 Début drag:', ui.item.data('key'));
+      ui.placeholder.height(ui.item.outerHeight());
     },
 
     stop: function(event, ui) {
-      console.log('✋ Fin drag:', ui.item.data('key'));
       window.saturne.columnManager.saveColumns(true, 500);
     },
-
-    change: function(event, ui) {
-      console.log('🔄 Changement position');
-    }
   });
-
-  console.log('✅ Sortable initialisé');
 };
 
-// ==========================================
-// COLUMN MANAGEMENT
-// ==========================================
-
 /**
- * Get column order from DOM
+ * Returns the current column order from the DOM.
  *
- * @since   1.0.0
- * @version 1.0.0
+ * @since   22.1.0
+ * @version 22.1.0
  *
- * @return {array} Array of column keys
+ * @return {Array} Ordered array of column keys.
  */
 window.saturne.columnManager.getColumnOrder = function() {
   var order = [];
@@ -144,94 +160,37 @@ window.saturne.columnManager.getColumnOrder = function() {
   return order;
 };
 
-// /**
-//  * Update column order
-//  *
-//  * @since   1.0.0
-//  * @version 1.0.0
-//  *
-//  * @return {void}
-//  */
-// window.saturne.columnManager.updateColumnOrder = function() {
-//   var newOrder = [];
-//
-//   $('#sortableColumns .column-item').each(function() {
-//     var columnKey = $(this).data('key');
-//     var column = $.grep(window.saturne.columnManager.columns, function(col) {
-//       return col.key === columnKey;
-//     })[0];
-//
-//     if (column) {
-//       newOrder.push(column);
-//     }
-//   });
-//
-//   window.saturne.columnManager.columns = newOrder;
-//   console.log('📋 Ordre mis à jour');
-//
-//     $.ajax({
-//         url: '/custom/saturne/ajax/updateColumnOrder.php',
-//         method: 'POST',
-//         data: { columns: window.saturne.columnManager.columns },
-//         success: function(response) {
-//         console.log('✅ Ordre sauvegardé en base');
-//         },
-//         error: function(xhr, status, error) {
-//         console.error('❌ Erreur sauvegarde ordre:', error);
-//         }
-//     });
-// };
-
 /**
- * Get column visibility from DOM
+ * Returns the current column visibility state from the DOM.
  *
- * @since   1.0.0
- * @version 1.0.0
+ * @since   22.1.0
+ * @version 22.1.0
  *
- * @return {object} Object with column keys and visibility
+ * @return {Object} Object mapping column keys to their visibility boolean.
  */
 window.saturne.columnManager.getColumnVisibility = function() {
   var visibility = {};
 
   $('#sortableColumns .column-item').each(function() {
-    var key = $(this).data('key');
-    var isVisible = $(this).find('input[type="checkbox"]').is(':checked');
+    var key       = $(this).data('key');
+    var isVisible = $(this).find('.toggle input[type="checkbox"]').is(':checked');
     visibility[key] = isVisible;
   });
 
   return visibility;
 };
 
-// /**
-//  * Toggle column visibility
-//  *
-//  * @since   1.0.0
-//  * @version 1.0.0
-//  *
-//  * @param   {string} columnKey Column key
-//  * @param   {boolean} isVisible Visibility state
-//  * @return  {void}
-//  */
-// window.saturne.columnManager.toggleColumnVisibility = function(columnKey, isVisible) {
-//   var column = $.grep(window.saturne.columnManager.columns, function(col) {
-//     return col.key === columnKey;
-//   })[0];
-//
-//   if (column) {
-//     column.visible = isVisible;
-//     window.saturne.columnManager.updateStats();
-//     console.log('👁️ Toggle:', columnKey, isVisible);
-//   }
-// };
-
 /**
- * Filter columns
+ * Filters the column list by search term.
  *
- * @since   1.0.0
- * @version 1.0.0
+ * Hides items whose label or field name does not match the search term.
+ * Matching is case-insensitive and covers both .column-name and .column-field.
  *
- * @param   {string} searchTerm Search term
- * @return  {void}
+ * @since   22.1.0
+ * @version 22.1.0
+ *
+ * @param  {string} searchTerm  The search string typed by the user.
+ * @return {void}
  */
 window.saturne.columnManager.filterColumns = function(searchTerm) {
   var term = searchTerm.toLowerCase();
@@ -247,165 +206,123 @@ window.saturne.columnManager.filterColumns = function(searchTerm) {
       $item.addClass('hidden');
     }
   });
-
-  console.log('🔍 Filtrage:', searchTerm);
 };
 
 /**
- * Update stats
+ * Updates the visible/hidden/total stats counters in the dialog footer.
  *
- * @since   1.0.0
- * @version 1.0.0
+ * @since   22.1.0
+ * @version 22.1.0
  *
  * @return {void}
  */
 window.saturne.columnManager.updateStats = function() {
-  var visible = $('#sortableColumns input[type="checkbox"]:checked').length;
-  var total = $('#sortableColumns .column-item').length;
-  var hidden = total - visible;
+  var visible = $('#sortableColumns .toggle input[type="checkbox"]:checked').length;
+  var total   = $('#sortableColumns .column-item').length;
+  var hidden  = total - visible;
 
   $('#visibleCount').text(visible);
   $('#hiddenCount').text(hidden);
   $('#totalCount').text(total);
-
-  console.log('📊 Stats:', visible, 'visibles,', hidden, 'cachées');
 };
 
-// ==========================================
-// SAVE / RESET
-// ==========================================
-
-// /**
-//  * Save columns
-//  *
-//  * @since   1.0.0
-//  * @version 1.0.0
-//  *
-//  * @return {void}
-//  */
-// window.saturne.columnManager.saveColumns = function() {
-//   window.saturne.columnManager.updateColumnOrder();
-//
-//   localStorage.setItem(
-//     window.saturne.columnManager.storageKey,
-//     JSON.stringify(window.saturne.columnManager.columns)
-//   );
-//
-//   console.log('✅ Configuration sauvegardée');
-//
-//   window.saturne.columnManager.closeModal();
-//   alert('Configuration des colonnes sauvegardée !');
-// };
-
 /**
- * Save columns avec debounce
+ * Saves column configuration with optional debounce.
  *
- * @since   1.0.0
- * @version 1.0.0
+ * In silent mode (auto-save after drag/toggle), the save is debounced by
+ * the given delay to avoid flooding the server with rapid successive calls.
+ * In normal mode (save button), the save executes immediately.
  *
- * @param   {boolean} silent Si true, pas de notification ni rechargement
- * @param   {number}  delay  Délai en ms avant la sauvegarde (défaut: 500)
+ * @since   22.1.0
+ * @version 22.1.0
+ *
+ * @param  {boolean} silent  If true, no page reload. Default: false.
+ * @param  {number}  delay   Debounce delay in ms. Default: 500.
  * @return {void}
  */
 window.saturne.columnManager.saveColumns = function(silent, delay) {
   silent = silent || false;
-  delay = delay || 500; // 500ms par défaut
+  delay  = delay  || 500;
 
-  // Annuler la sauvegarde précédente si elle existe
+  // Cancel any pending debounced save.
   if (window.saturne.columnManager.saveTimeout) {
     clearTimeout(window.saturne.columnManager.saveTimeout);
   }
 
-  // Si mode normal (bouton), sauvegarder immédiatement
+  // Immediate save when triggered by the save button.
   if (!silent) {
     window.saturne.columnManager.executeSave(silent);
     return;
   }
 
-  // Si mode silent (auto-save), attendre le délai
+  // Debounced save when triggered by drag or visibility toggle.
   window.saturne.columnManager.saveTimeout = setTimeout(function() {
     window.saturne.columnManager.executeSave(silent);
   }, delay);
 };
 
 /**
- * Execute save (fonction interne)
+ * Executes the AJAX save request for column order and visibility.
  *
- * @since   1.0.0
- * @version 1.0.0
+ * Sends a POST request to the current page URL with action=save_columns.
+ * On success in normal mode, reloads the page to reflect the new column order.
  *
- * @param   {boolean} silent Si true, pas de notification ni rechargement
+ * @since   22.1.0
+ * @version 22.1.0
+ *
+ * @param  {boolean} silent  If true, no page reload after save.
  * @return {void}
  */
 window.saturne.columnManager.executeSave = function(silent) {
-  var columnOrder = window.saturne.columnManager.getColumnOrder();
+  var columnOrder      = window.saturne.columnManager.getColumnOrder();
   var columnVisibility = window.saturne.columnManager.getColumnVisibility();
-
-  let token          = window.saturne.toolbox.getToken();
-  let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
-
-  console.log('💾 Sauvegarde en cours...');
-
-  var ajaxUrl = document.URL + querySeparator + 'action=save_columns&token=' + token;
+  var token            = window.saturne.toolbox.getToken();
+  var querySeparator   = window.saturne.toolbox.getQuerySeparator(document.URL);
+  var ajaxUrl          = document.URL + querySeparator + 'action=save_columns&token=' + token;
 
   $.ajax({
-    url: ajaxUrl,
-    method: 'POST',
-    contentType: 'application/json',
-    data: JSON.stringify({
-      column_order: columnOrder,
-      column_visibility: columnVisibility
+    url         : ajaxUrl,
+    method      : 'POST',
+    contentType : 'application/json',
+    data        : JSON.stringify({
+      column_order      : columnOrder,
+      column_visibility : columnVisibility,
     }),
     success: function(response) {
-      var $newTable = $(response).find('.div-table-responsive');
-      $('.div-table-responsive').replaceWith($newTable);
-
       if (!silent) {
-        window.saturne.columnManager.closeModal();
         location.reload();
       }
     },
     error: function(xhr, status, error) {
-      console.error('❌ Erreur sauvegarde:', error);
-
       if (!silent) {
-        alert('Erreur lors de la sauvegarde');
+        window.saturne.toolbox.displayNotification('error', 'ErrorSavingColumns');
       }
-    }
+    },
   });
 };
 
 /**
- * Reset columns
+ * Resets column order and visibility to default values.
  *
- * @since   1.0.0
- * @version 1.0.0
+ * Sends a POST request to the current page URL with action=reset_columns,
+ * then reloads the page to reflect the reset state.
+ *
+ * @since   22.1.0
+ * @version 22.1.0
  *
  * @return {void}
  */
 window.saturne.columnManager.resetColumns = function() {
-  // if (confirm('Voulez-vous vraiment réinitialiser ?')) {
-  //   localStorage.removeItem(window.saturne.columnManager.storageKey);
-  //   window.saturne.columnManager.loadDefaultColumns();
-  //   window.saturne.columnManager.renderColumnList();
-  //
-  //   console.log('🔄 Colonnes réinitialisées');
-  // }
+  var token          = window.saturne.toolbox.getToken();
+  var querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
+  var ajaxUrl        = document.URL + querySeparator + 'action=reset_columns&token=' + token;
 
-  if (confirm('Voulez-vous vraiment réinitialiser ?')) {
-    $.ajax({
-      url: 'ajax/save_columns.php', // À adapter
-      method: 'POST',
-      data: {
-        action: 'reset_columns'
-      },
-      success: function(response) {
-        console.log('🔄 Colonnes réinitialisées');
-        location.reload();
-      },
-      error: function(xhr, status, error) {
-        console.error('❌ Erreur réinitialisation:', error);
-      }
-    });
-  }
+  $.ajax({
+    url    : ajaxUrl,
+    method : 'POST',
+    data   : { action: 'reset_columns' },
+    success: function() {
+      location.reload();
+    },
+  });
 };

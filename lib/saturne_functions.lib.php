@@ -69,6 +69,15 @@ function saturne_header(int $load_media_gallery = 0, string $head = '', string $
         $arrayofjs[] = '/' . $moduleNameLowerCase . '/js/' . $moduleNameLowerCase . '.min.js';
     }
 
+    $experimentAssetsPath  = 'admin/tools/ui/experimental/experiments/dialog/assets/';
+    $experimentAssetsPath2 = 'admin/tools/ui/experimental/experiments/dolibarr-context/assets/';
+    $arrayofjs[] = $experimentAssetsPath2 . '/dolibarr-context.umd.js';
+    $arrayofjs[] = $experimentAssetsPath2 . '/dolibarr-tool.seteventmessage.js';
+    $arrayofjs[] = $experimentAssetsPath2 . '/dolibarr-tool.langs.js';
+    $arrayofjs[] = $experimentAssetsPath . '/ui-dialog.js';
+
+    $arrayofcss[] = $experimentAssetsPath . '/ui-dialog.css';
+
     llxHeader($head, $title, $help_url, $target, $disablejs, $disablehead, $arrayofjs, $arrayofcss, $morequerystring, $morecssonbody, $replacemainareaby, $disablenofollow, $disablenoindex);
 
     if ($load_media_gallery) {
