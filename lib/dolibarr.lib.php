@@ -450,7 +450,6 @@ function saturne_get_title_field_of_list($name, $thead = 0, $file = "", $field =
 	$tmpfield = explode(',', $field);
 	$field1 = trim($tmpfield[0]); // If $field is 'd.datep,d.id', it becomes 'd.datep'
 
-    $prefix = '';
 	if (!getDolGlobalString('MAIN_DISABLE_WRAPPING_ON_COLUMN_TITLE') && empty($forcenowrapcolumntitle)) {
 		//$prefix = 'wrapcolumntitle '.$prefix;
 	}
