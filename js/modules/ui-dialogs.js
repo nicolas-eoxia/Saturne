@@ -167,6 +167,21 @@ window.saturne.uiDialogs.register = function(element) {
     element.id = 'ui-dialog-trigger-' + dataset.dialogId;
   }
 
+  // Resolve footer options from data-dialog-footer attribute.
+  // 'auto'   — default: show a Close button (standard read-only dialogs).
+  // 'none'   — no footer rendered at all.
+  // 'custom' — footer injected by the TPL itself via .dol-dialog-footer.
+  const footerMode = dataset.dialogFooter || 'auto';
+  let footer;
+
+  if (footerMode === 'none') {
+    footer = { showSubmit: false, showCancel: false };
+  } else if (footerMode === 'custom') {
+    footer = { showSubmit: false, showCancel: false };
+  } else {
+    footer = { showSubmit: false, cancelLabel: Dolibarr.tools.langs.trans('Close') };
+  }
+
   Dolibarr.tools.uiDialog('#' + element.id, {
     dialogId   : dataset.dialogId,
     title      : dataset.dialogTitle     || '',
@@ -178,10 +193,7 @@ window.saturne.uiDialogs.register = function(element) {
     animation  : dataset.dialogAnimation !== 'false',  // Default true unless explicitly 'false'.
     width      : dataset.dialogWidth     || 0,
     height     : dataset.dialogHeight    || 0,
-    footer     : {
-      showSubmit  : false,
-      cancelLabel : Dolibarr.tools.langs.trans('Close'),
-    },
+    footer     : footer,
   });
 };
 
